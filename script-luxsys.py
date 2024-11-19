@@ -19,6 +19,8 @@ def create_project_structure():
         f"{project_name}/modules/clients.py": "# Logic for client management\n",
         f"{project_name}/modules/sales.py": "# Logic for sales management\n",
         f"{project_name}/modules/cash_register.py": "# Logic for cash register management\n",
+        f"{project_name}/modules/product_manager.py": "# Logic for Product management tab\n",
+        # GUI DARK theme
         f"{project_name}/assets/themes/azure-dark.json": "{}",
     }
 
