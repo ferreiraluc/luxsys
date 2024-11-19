@@ -44,4 +44,20 @@ Welcome to **Luxsys**, a modern and modular import management system designed to
 
 ## Project Structure
 
-luxsys/ ├── app.py # Main entry point of the application ├── core/ │ ├── init.py # Initializes the core package │ ├── database.py # Handles database connections and table creation │ └── utils.py # Utility functions for reusable logic ├── modules/ │ ├── init.py # Initializes the modules package │ ├── clients.py # Client management functionalities │ ├── cash_register.py # Cash register functionalities │ ├── products.py # Product management functionalities │ ├── sales.py # Sales management functionalities │ └── product_manager.py # Comprehensive product management tab ├── assets/ │ ├── themes/ # Contains themes for the GUI │ └── images/ # Images or icons for the interface └── luxsys.db # SQLite database file
+luxsys/ 
+├── app.py # Main entry point of the application 
+├── core/ 
+│ ├── init.py # Initializes the core package 
+│ ├── database.py # Handles database connections and table creation 
+│ └── utils.py # Utility functions for reusable logic 
+├── modules/ 
+│ ├── init.py # Initializes the modules package 
+│ ├── clients.py # Client management functionalities 
+│ ├── cash_register.py # Cash register functionalities 
+│ ├── products.py # Product management functionalities 
+│ ├── sales.py # Sales management functionalities 
+│ └── product_manager.py # Comprehensive product management tab 
+├── assets/ 
+│ ├── themes/ # Contains themes for the GUI 
+│ └── images/ # Images or icons for the interface 
+└── luxsys.db # SQLite database file
