@@ -19,7 +19,8 @@ def create_tables():
         name TEXT NOT NULL,
         price REAL NOT NULL,
         description TEXT,
-        quantity INTEGER NOT NULL
+        quantity INTEGER NOT NULL,
+        code TEXT  -- Optional column for product code
     )
     """)
 
@@ -66,10 +67,17 @@ def create_tables():
     )
     """)
 
+    # Check if the 'code' column exists in the 'products' table
+    cursor.execute("PRAGMA table_info(products)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if "code" not in columns:
+        # Add the 'code' column if it doesn't exist
+        cursor.execute("ALTER TABLE products ADD COLUMN code TEXT")
+
     conn.commit()
     conn.close()
 
-    
+
 def execute_query(query, params=()):
     """Execute a given query with optional parameters."""
     conn = connect_db()
