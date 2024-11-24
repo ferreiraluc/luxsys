@@ -57,7 +57,6 @@ def main():
 
 
 def get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table):
-    """Retorna todos os widgets necessários para o sistema de tradução."""
     return {
         "app": app,
         "title_label": title_label,
@@ -91,27 +90,31 @@ def create_product_frame(parent):
     product_table.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
     product_table.column("ID", anchor="center", width=50)
-    product_table.column("Nome", anchor="w", width=100)
-    product_table.column("Preço (USD)", anchor="e", width=100)
-    product_table.column("Quantidade", anchor="center", width=80)
     product_table.column("Código", anchor="center", width=120)
+    product_table.column("Nome", anchor="center", width=100)
+    product_table.column("Preço (USD)", anchor="center", width=100)
+    product_table.column("Quantidade", anchor="center", width=80)
 
     product_table.heading("ID", text="ID")
+    product_table.heading("Código", text="Código")
     product_table.heading("Nome", text="Nome")
     product_table.heading("Preço (USD)", text="Preço (USD)")
     product_table.heading("Quantidade", text="Quantidade")
-    product_table.heading("Código", text="Código")
 
     # Botões
+    button_frame = ttk.Frame(product_frame)
+    button_frame.pack(fill=X, pady=5)
+
     global open_management_button, refresh_button
-    open_management_button = ttk.Button(product_frame, text=translate("open_management"), command=open_product_manager, bootstyle=PRIMARY)
+    open_management_button = ttk.Button(button_frame, text=translate("open_management"), command=open_product_manager, bootstyle=PRIMARY)
     open_management_button.pack(side=LEFT, padx=5)
 
-    refresh_button = ttk.Button(product_frame, text=translate("refresh"), command=lambda: load_products(product_table), bootstyle=SUCCESS)
+    refresh_button = ttk.Button(button_frame, text=translate("refresh"), command=lambda: load_products(product_table), bootstyle=SUCCESS)
     refresh_button.pack(side=LEFT, padx=5)
 
     load_products(product_table)
     return product_frame, product_table
+
 
 
 def create_sales_frame(parent):

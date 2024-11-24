@@ -16,11 +16,13 @@ def create_tables():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
         description TEXT,
-        quantity INTEGER NOT NULL,
-        code TEXT  -- Optional column for product code
+        quantity INTEGER NOT NULL
+        
+        
     )
     """)
 
@@ -66,13 +68,6 @@ def create_tables():
         transaction_date TEXT NOT NULL
     )
     """)
-
-    # Check if the 'code' column exists in the 'products' table
-    cursor.execute("PRAGMA table_info(products)")
-    columns = [column[1] for column in cursor.fetchall()]
-    if "code" not in columns:
-        # Add the 'code' column if it doesn't exist
-        cursor.execute("ALTER TABLE products ADD COLUMN code TEXT")
 
     conn.commit()
     conn.close()
