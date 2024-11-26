@@ -1,11 +1,12 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
+from core.utils import translate
 
 def open():
     """Open the sales management window."""
     sales_window = ttk.Toplevel()
-    sales_window.title("Cadastro de Vendas")
+    sales_window.title(translate("sales_button"))
     sales_window.geometry("800x600")
 
     # Configuração de Layout Responsivo
@@ -23,32 +24,32 @@ def open():
     form_frame.columnconfigure(3, weight=1)
 
     # Cliente Dropdown
-    ttk.Label(form_frame, text="Selecione o Cliente:", font=("Helvetica", 12)).grid(row=0, column=0, padx=10, pady=5, sticky=W)
+    ttk.Label(form_frame, text=translate("client_name"), font=("Helvetica", 12)).grid(row=0, column=0, padx=10, pady=5, sticky=W)
     client_combobox = ttk.Combobox(form_frame, state="readonly")
     client_combobox.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
     # Produto Dropdown
-    ttk.Label(form_frame, text="Selecione o Produto:", font=("Helvetica", 12)).grid(row=1, column=0, padx=10, pady=5, sticky=W)
+    ttk.Label(form_frame, text=translate("product_name"), font=("Helvetica", 12)).grid(row=1, column=0, padx=10, pady=5, sticky=W)
     product_combobox = ttk.Combobox(form_frame, state="readonly")
     product_combobox.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
     # Quantidade
-    ttk.Label(form_frame, text="Quantidade:", font=("Helvetica", 12)).grid(row=1, column=2, padx=10, pady=5, sticky=W)
+    ttk.Label(form_frame, text=translate("quantity"), font=("Helvetica", 12)).grid(row=1, column=2, padx=10, pady=5, sticky=W)
     quantity_entry = ttk.Entry(form_frame)
     quantity_entry.grid(row=1, column=3, padx=10, pady=5, sticky="ew")
 
     # Botão Adicionar Produto
-    ttk.Button(form_frame, text="Adicionar Produto", command=lambda: add_product(), bootstyle=PRIMARY).grid(row=1, column=4, padx=10, pady=5)
+    ttk.Button(form_frame, text=translate("add_product"), command=lambda: add_product(), bootstyle=PRIMARY).grid(row=1, column=4, padx=10, pady=5)
 
     # Produtos adicionados à venda
-    columns = ("Produto", "Quantidade", "Preço Unitário", "Total")
+    columns = (translate("name"), translate("quantity"), translate("price_usd"), translate("total_usd"))
     sale_table = ttk.Treeview(sales_window, columns=columns, show="headings", height=10)
     sale_table.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
-    sale_table.column("Produto", anchor="w", width=150)
-    sale_table.column("Quantidade", anchor="center", width=100)
-    sale_table.column("Preço Unitário", anchor="e", width=100)
-    sale_table.column("Total", anchor="e", width=120)
+    sale_table.column(translate("name"), anchor="w", width=150)
+    sale_table.column(translate("quantity"), anchor="center", width=100)
+    sale_table.column(translate("price_usd"), anchor="e", width=100)
+    sale_table.column(translate("total_usd"), anchor="e", width=120)
 
     for col in columns:
         sale_table.heading(col, text=col)
@@ -62,7 +63,7 @@ def open():
         quantity = quantity_entry.get()
 
         if not product_name or not quantity.isdigit() or int(quantity) <= 0:
-            ttk.Label(form_frame, text="Selecione um produto e insira uma quantidade válida.", foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+            ttk.Label(form_frame, text=translate("error_fill_fields"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
             return
 
         quantity = int(quantity)
@@ -70,7 +71,7 @@ def open():
         if product:
             product_id, name, price, available_quantity = product[0]
             if quantity > available_quantity:
-                ttk.Label(form_frame, text="Quantidade insuficiente no estoque.", foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+                ttk.Label(form_frame, text=translate("error_fill_fields"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
                 return
 
             total = price * quantity
@@ -83,13 +84,13 @@ def open():
         """Save the sale to the database."""
         client_name = client_combobox.get()
         if not client_name or not sale_items:
-            ttk.Label(form_frame, text="Selecione um cliente e adicione produtos.", foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+            ttk.Label(form_frame, text=translate("error_fill_fields"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
             return
 
         # Busca ID do cliente
         client = fetch_all("SELECT id FROM clients WHERE name = ?", (client_name,))
         if not client:
-            ttk.Label(form_frame, text="Cliente não encontrado.", foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+            ttk.Label(form_frame, text=translate("client_not_found"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
             return
 
         client_id = client[0][0]
@@ -107,13 +108,13 @@ def open():
 
         # Registra o valor da venda no caixa
         execute_query("INSERT INTO cash_register (description, amount, transaction_date) VALUES (?, ?, datetime('now'))",
-                      ("Venda realizada", total_amount))
+                      (translate("sale_registered"), total_amount))
 
-        ttk.Label(form_frame, text="Venda registrada com sucesso!", foreground="green").grid(row=2, column=0, columnspan=4, sticky="ew")
+        ttk.Label(form_frame, text=translate("success_sale_registered"), foreground="green").grid(row=2, column=0, columnspan=4, sticky="ew")
         sale_items.clear()
         sale_table.delete(*sale_table.get_children())
 
-    ttk.Button(sales_window, text="Finalizar Venda", command=save_sale, bootstyle=SUCCESS).grid(row=2, column=0, columnspan=4, pady=10)
+    ttk.Button(sales_window, text=translate("save"), command=save_sale, bootstyle=SUCCESS).grid(row=2, column=0, columnspan=4, pady=10)
 
     # Carrega dados para os comboboxes
     def load_data():
