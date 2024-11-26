@@ -41,7 +41,7 @@ translations = {
         "clients_button": "Cadastro de Clientes",
         "sales_button": "Cadastro de Vendas",
         "cash_register_button": "Caixa",
-        "open_management": "Abrir Gerenciamento de Produtos",
+        "open_management": "Gerenciamento de Produtos",
         "refresh": "Atualizar",
         "sales_management": "Gerenciamento de Vendas",
         "id": "ID",

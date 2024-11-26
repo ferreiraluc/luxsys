@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
 
-def open_product_manager(product_id=None):
+def open_product_manager():
     """Abre a aba de gerenciamento de produtos."""
     product_window = ttk.Toplevel()
     product_window.title("Gerenciamento de Produtos")
@@ -21,13 +21,13 @@ def open_product_manager(product_id=None):
     search_button.pack(side=LEFT, padx=5)
 
     # Listagem de Produtos
-    columns = ("ID", "Código", "Nome", "Preço (USD)", "Quantidade", "Editar")
+    columns = ("ID", "Código", "Nome", "Preço (USD)", "Quantidade", "Editar", "Excluir")
     product_table = ttk.Treeview(product_window, columns=columns, show="headings", height=15)
     product_table.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
     for col in columns:
         product_table.heading(col, text=col, command=lambda c=col: sort_column(product_table, c, False))
-        product_table.column(col, anchor="center" if col in ("ID", "Código", "Preço (USD)", "Quantidade") else "w", width=120)
+        product_table.column(col, anchor="center", width=120)
 
     def load_products():
         """Carrega todos os produtos no Treeview."""
@@ -36,7 +36,7 @@ def open_product_manager(product_id=None):
 
         rows = fetch_all("SELECT id, code, name, price, quantity FROM products ORDER BY id DESC")
         for row in rows:
-            product_table.insert("", "end", values=row + ("Editar",))
+            product_table.insert("", "end", values=row + ("Editar", "Excluir"))
 
     def sort_column(treeview, col, reverse):
         """Ordena a tabela ao clicar no cabeçalho."""
@@ -58,7 +58,22 @@ def open_product_manager(product_id=None):
         for row in product_table.get_children():
             product_table.delete(row)
         for row in rows:
-            product_table.insert("", "end", values=row + ("Editar",))
+            product_table.insert("", "end", values=row + ("Editar", "Excluir"))
+
+    def confirm_delete(product_id):
+        """Exibe um pop-up para confirmação de exclusão."""
+        confirm_window = ttk.Toplevel()
+        confirm_window.title("Confirmar Exclusão")
+        confirm_window.geometry("250x150")
+        ttk.Label(confirm_window, text="Tem certeza que deseja excluir este produto?", wraplength=250).pack(pady=10)
+
+        def delete_product():
+            execute_query("DELETE FROM products WHERE id = ?", (product_id,))
+            load_products()
+            confirm_window.destroy()
+
+        ttk.Button(confirm_window, text="Sim", bootstyle=DANGER, command=delete_product).pack(pady=10)
+        ttk.Button(confirm_window, text="Não", bootstyle=SUCCESS, command=confirm_window.destroy).pack(pady=10)
 
     def edit_product(product_id):
         """Abre uma janela para editar o produto."""
@@ -110,50 +125,50 @@ def open_product_manager(product_id=None):
 
         ttk.Button(edit_window, text="Salvar Alterações", bootstyle=SUCCESS, command=save_changes).pack(pady=10)
 
-    def add_product(code, name, price, quantity):
-        """Adiciona um novo produto ao banco de dados."""
-        if not code.get() or not name.get() or not price.get() or not quantity.get():
-            ttk.Label(product_window, text="Preencha todos os campos.", foreground="red").pack(pady=10)
-            return
+    def on_action(event):
+        """Determina a ação (editar ou excluir) ao clicar em uma célula da tabela."""
+        selected_item = product_table.selection()
+        if selected_item:
+            item_values = product_table.item(selected_item[0], "values")
+            action = product_table.identify_column(event.x).replace("#", "")
+            if action == "6":  # Editar
+                edit_product(item_values[0])
+            elif action == "7":  # Excluir
+                confirm_delete(item_values[0])
 
+    product_table.bind("<ButtonRelease-1>", on_action)
+
+    # Adicionar Novo Produto no Rodapé
+    add_frame = ttk.Frame(product_window, padding=10)
+    add_frame.pack(fill=X, pady=10)
+
+    ttk.Label(add_frame, text="Código:").pack(side=LEFT, padx=5)
+    code_entry = ttk.Entry(add_frame, width=10)
+    code_entry.pack(side=LEFT, padx=5)
+
+    ttk.Label(add_frame, text="Nome:").pack(side=LEFT, padx=5)
+    name_entry = ttk.Entry(add_frame, width=20)
+    name_entry.pack(side=LEFT, padx=5)
+
+    ttk.Label(add_frame, text="Preço:").pack(side=LEFT, padx=5)
+    price_entry = ttk.Entry(add_frame, width=10)
+    price_entry.pack(side=LEFT, padx=5)
+
+    ttk.Label(add_frame, text="Quantidade:").pack(side=LEFT, padx=5)
+    quantity_entry = ttk.Entry(add_frame, width=10)
+    quantity_entry.pack(side=LEFT, padx=5)
+
+    def add_product():
+        """Adiciona um novo produto ao banco de dados."""
+        if not code_entry.get() or not name_entry.get() or not price_entry.get() or not quantity_entry.get():
+            return
         execute_query(
             "INSERT INTO products (code, name, price, quantity) VALUES (?, ?, ?, ?)",
-            (code.get().strip(), name.get().strip(), float(price.get()), int(quantity.get()))
+            (code_entry.get().strip(), name_entry.get().strip(), float(price_entry.get()), int(quantity_entry.get()))
         )
         load_products()
 
-    # Adicionar Novo Produto
-    new_product_frame = ttk.Frame(product_window, padding=10)
-    new_product_frame.pack(fill=X, pady=10)
-
-    ttk.Label(new_product_frame, text="Código:").pack(side=LEFT, padx=5)
-    code_entry = ttk.Entry(new_product_frame, width=10)
-    code_entry.pack(side=LEFT, padx=5)
-
-    ttk.Label(new_product_frame, text="Nome:").pack(side=LEFT, padx=5)
-    name_entry = ttk.Entry(new_product_frame, width=20)
-    name_entry.pack(side=LEFT, padx=5)
-
-    ttk.Label(new_product_frame, text="Preço:").pack(side=LEFT, padx=5)
-    price_entry = ttk.Entry(new_product_frame, width=10)
-    price_entry.pack(side=LEFT, padx=5)
-
-    ttk.Label(new_product_frame, text="Quantidade:").pack(side=LEFT, padx=5)
-    quantity_entry = ttk.Entry(new_product_frame, width=10)
-    quantity_entry.pack(side=LEFT, padx=5)
-
-    add_button = ttk.Button(new_product_frame, text="Adicionar Produto", bootstyle=SUCCESS, command=lambda: add_product(code_entry, name_entry, price_entry, quantity_entry))
-    add_button.pack(side=LEFT, padx=5)
-
-    # Adiciona botões de edição na tabela
-    def on_item_double_click(event):
-        """Abre o editor ao clicar duas vezes em uma linha."""
-        selected_item = product_table.selection()
-        if selected_item:
-            product_id = product_table.item(selected_item[0], "values")[0]
-            edit_product(product_id)
-
-    product_table.bind("<Double-1>", on_item_double_click)
+    ttk.Button(add_frame, text="Adicionar Produto", bootstyle=SUCCESS, command=add_product).pack(side=LEFT, padx=5)
 
     # Carregar produtos ao iniciar
     load_products()
