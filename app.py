@@ -11,6 +11,18 @@ from modules.product_manager import open_product_manager
 from modules.sales_manager import open_sales_manager
 
 
+def apply_zoom(app, scale_factor):
+    """Aplica zoom a toda a aplicação alterando tamanhos de fontes e widgets."""
+    default_font = ttk.Style().lookup("TButton", "font")
+    base_size = int(default_font.split()[-1]) if default_font else 12
+    new_size = max(8, min(30, int(base_size * scale_factor)))
+
+    # Atualiza estilos globais
+    ttk.Style().configure(".", font=("Helvetica", new_size))
+    for widget in app.winfo_children():
+        widget.configure(font=("Helvetica", new_size))
+
+
 def main():
     """Initialize the application and display the main menu."""
     app = ttk.Window(themename="darkly")
@@ -23,6 +35,16 @@ def main():
     app.rowconfigure(0, weight=1)
     app.columnconfigure(0, weight=1)
 
+    # Barra de Zoom
+    zoom_frame = ttk.Frame(app)
+    zoom_frame.grid(row=0, column=1, sticky="e", padx=10, pady=10)
+
+    zoom_in_button = ttk.Button(zoom_frame, text="+", command=lambda: apply_zoom(app, 1.2))
+    zoom_in_button.pack(side="left", padx=5)
+
+    zoom_out_button = ttk.Button(zoom_frame, text="-", command=lambda: apply_zoom(app, 0.8))
+    zoom_out_button.pack(side="left", padx=5)
+
     # Botões de Idioma no canto superior esquerdo
     language_frame = ttk.Frame(frame, padding=10)
     language_frame.grid(row=0, column=0, sticky="w", padx=5)
@@ -33,6 +55,10 @@ def main():
     ttk.Button(
         language_frame, text="🇺🇸", bootstyle="info",
         command=lambda: switch_language("en", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table))
+    ).pack(side=LEFT, padx=5)
+    ttk.Button(
+        language_frame, text="🇪🇸", bootstyle="warning",
+        command=lambda: switch_language("es", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table))
     ).pack(side=LEFT, padx=5)
 
     # Título
