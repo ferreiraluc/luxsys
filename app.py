@@ -22,12 +22,32 @@ def apply_zoom(app, scale_factor):
     for widget in app.winfo_children():
         widget.configure(font=("Helvetica", new_size))
 
+def adjust_window_to_screen(app):
+    """Ajusta a janela ao tamanho da tela e centraliza a posição."""
+    screen_width = app.winfo_screenwidth()  # Largura da tela
+    screen_height = app.winfo_screenheight()  # Altura da tela
+
+    # Define o tamanho da janela proporcional à resolução
+    if screen_width > 1920 and screen_height > 1080:  # Para telas grandes (2K ou superiores)
+        window_width = int(screen_width * 0.8)
+        window_height = int(screen_height * 0.8)
+    else:  # Para resoluções padrão (Full HD ou menores)
+        window_width = 1280
+        window_height = 768
+
+    # Calcula a posição central
+    position_x = (screen_width - window_width) // 2
+    position_y = (screen_height - window_height) // 2
+
+    # Aplica as dimensões e a posição da janela
+    app.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
+
 
 def main():
     """Initialize the application and display the main menu."""
     app = ttk.Window(themename="darkly")
     app.title(translate("title"))
-    app.geometry("1024x768")
+    adjust_window_to_screen(app)
 
     # Configuração do layout principal
     frame = ttk.Frame(app, padding=10)
