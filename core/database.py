@@ -16,10 +16,13 @@ def create_tables():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
         description TEXT,
         quantity INTEGER NOT NULL
+        
+        
     )
     """)
 
@@ -69,7 +72,7 @@ def create_tables():
     conn.commit()
     conn.close()
 
-    
+
 def execute_query(query, params=()):
     """Execute a given query with optional parameters."""
     conn = connect_db()
