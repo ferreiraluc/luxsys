@@ -1,5 +1,6 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+from PIL import Image, ImageTk
 from core.utils import (
     translate,
     load_products,
@@ -12,15 +13,24 @@ from modules.sales_manager import open_sales_manager
 
 
 def apply_zoom(app, scale_factor):
-    """Aplica zoom a toda a aplicação alterando tamanhos de fontes e widgets."""
+    """Aplica zoom à aplicação, ajustando fontes e espaçamentos."""
     default_font = ttk.Style().lookup("TButton", "font")
     base_size = int(default_font.split()[-1]) if default_font else 12
-    new_size = max(8, min(30, int(base_size * scale_factor)))
+    new_size = max(8, min(12, int(base_size * scale_factor)))
 
-    # Atualiza estilos globais
+    # Atualiza estilos globais de fonte
     ttk.Style().configure(".", font=("Helvetica", new_size))
+
+    # Ajusta padding dinamicamente com base no zoom
     for widget in app.winfo_children():
-        widget.configure(font=("Helvetica", new_size))
+        widget_type = widget.winfo_class()
+
+        if widget_type in ["Frame", "Labelframe"]:
+            widget.configure(padding=int(10 * scale_factor))  # Padding proporcional ao zoom
+
+        if widget_type in ["Button", "Label", "Entry", "Treeview"]:
+            widget.grid_configure(padx=int(10 * scale_factor), pady=int(5 * scale_factor))  # Margens ajustadas
+
 
 def adjust_window_to_screen(app):
     """Ajusta a janela ao tamanho da tela e centraliza a posição."""
@@ -42,6 +52,34 @@ def adjust_window_to_screen(app):
     # Aplica as dimensões e a posição da janela
     app.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
 
+def create_custom_styles():
+    """Define estilos personalizados para os botões de idioma."""
+    style = ttk.Style()
+    style.configure(
+        "Language.TButton",
+        relief="flat",
+        padding=0,
+        borderwidth=0
+    )
+    style.configure(
+        "Zoom.TButton",  # Reduz o padding interno
+        width=1,  # Controla a largura do botão
+        font=("Helvetica", 10)  # Tamanho menor para o texto
+    )
+
+
+def load_flag_images():
+    """Carrega as imagens das bandeiras com verificação de erro."""
+    try:
+        return {
+            "br": ImageTk.PhotoImage(Image.open("assets/images/br.png").resize((30, 20))),
+            "us": ImageTk.PhotoImage(Image.open("assets/images/us.jpg").resize((30, 20))),
+            "es": ImageTk.PhotoImage(Image.open("assets/images/es.png").resize((30, 20))),
+        }
+    except FileNotFoundError as e:
+        print(f"Erro ao carregar bandeiras: {e}")
+        return None
+
 
 def main():
     """Initialize the application and display the main menu."""
@@ -49,38 +87,55 @@ def main():
     app.title(translate("title"))
     adjust_window_to_screen(app)
 
+    create_custom_styles()
+    flags = load_flag_images()
     # Configuração do layout principal
     frame = ttk.Frame(app, padding=10)
     frame.grid(row=0, column=0, sticky="nsew")
     app.rowconfigure(0, weight=1)
     app.columnconfigure(0, weight=1)
 
-    # Barra de Zoom
-    zoom_frame = ttk.Frame(app)
-    zoom_frame.grid(row=0, column=1, sticky="e", padx=10, pady=10)
-
-    zoom_in_button = ttk.Button(zoom_frame, text="+", command=lambda: apply_zoom(app, 1.2))
-    zoom_in_button.pack(side="left", padx=5)
-
-    zoom_out_button = ttk.Button(zoom_frame, text="-", command=lambda: apply_zoom(app, 0.8))
-    zoom_out_button.pack(side="left", padx=5)
-
     # Botões de Idioma no canto superior esquerdo
     language_frame = ttk.Frame(frame, padding=10)
     language_frame.grid(row=0, column=0, sticky="w", padx=5)
     ttk.Button(
-        language_frame, text="🇧🇷", bootstyle="success",
-        command=lambda: switch_language("pt", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table))
-    ).pack(side=LEFT, padx=5)
+        language_frame,
+        image=flags["br"],
+        command=lambda: switch_language("pt", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table)),
+        style="Language.TButton"
+    ).pack(side=LEFT, padx=2)
+    
     ttk.Button(
-        language_frame, text="🇺🇸", bootstyle="info",
-        command=lambda: switch_language("en", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table))
-    ).pack(side=LEFT, padx=5)
-    ttk.Button(
-        language_frame, text="🇪🇸", bootstyle="warning",
-        command=lambda: switch_language("es", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table))
-    ).pack(side=LEFT, padx=5)
+        language_frame,
+        image=flags["us"],
+        command=lambda: switch_language("en", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table)),
+        style="Language.TButton"
+    ).pack(side=LEFT, padx=2)
 
+    ttk.Button(
+        language_frame,
+        image=flags["es"],
+        command=lambda: switch_language("es", get_widgets(app, title_label, product_frame, product_table, sales_frame, sales_table)),
+        style="Language.TButton"
+    ).pack(side=LEFT, padx=2)
+    
+    zoom_frame = ttk.Frame(frame, padding=10)
+    zoom_frame.grid(row=0, column=1, sticky="e", padx=5)
+
+    ttk.Button(
+        zoom_frame,
+        text="-",
+        command=lambda: apply_zoom(app, 0.8),
+        style="Zoom.TButton"
+    ).pack(side=LEFT, padx=2)
+
+    ttk.Button(
+        zoom_frame,
+        text="+",
+        command=lambda: apply_zoom(app, 1.2),
+        style="Zoom.TButton"
+    ).pack(side=LEFT, padx=2)
+    
     # Título
     title_label = ttk.Label(frame, text=translate("title"), font=("Helvetica", 24, "bold"))
     title_label.grid(row=1, column=0, columnspan=2, pady=10, sticky="n")
@@ -91,7 +146,7 @@ def main():
 
     # Botões principais
     button_frame = ttk.Frame(frame, padding=10)
-    button_frame.grid(row=3, column=0, columnspan=2, pady=20, sticky="n")
+    button_frame.grid(row=3, column=0, columnspan=4, pady=20, sticky="n")
     create_main_buttons(button_frame)
 
     # Configuração de redimensionamento dos frames
@@ -120,6 +175,7 @@ def get_widgets(app, title_label, product_frame, product_table, sales_frame, sal
         "sales_button": sales_button,
         "cash_register_button": cash_register_button,
     }
+    
 
 
 def create_product_frame(parent):
@@ -133,7 +189,7 @@ def create_product_frame(parent):
         show="headings",
         height=10
     )
-    product_table.pack(fill=BOTH, expand=True, padx=5, pady=5)
+    product_table.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
     product_table.column("ID", anchor="center", width=50)
     product_table.column("Código", anchor="center", width=120)
@@ -195,19 +251,19 @@ def create_sales_frame(parent):
 def create_main_buttons(parent):
     """Cria os botões principais do menu."""
     global products_button, clients_button, sales_button, cash_register_button
-    button_style = {"bootstyle": "primary", "width": 20, "padding": 10}
+    button_style = {"bootstyle": "primary", "width": 40, "padding": 20}
 
     products_button = ttk.Button(parent, text=translate("products_button"), command=products.open, **button_style)
     products_button.grid(row=0, column=0, padx=20, pady=10)
 
     clients_button = ttk.Button(parent, text=translate("clients_button"), command=clients.open, **button_style)
-    clients_button.grid(row=1, column=0, padx=20, pady=10)
+    clients_button.grid(row=0, column=1, padx=20, pady=10)
 
     sales_button = ttk.Button(parent, text=translate("sales_button"), command=sales.open, **button_style)
-    sales_button.grid(row=0, column=1, padx=20, pady=10)
+    sales_button.grid(row=0, column=2, padx=20, pady=10)
 
     cash_register_button = ttk.Button(parent, text=translate("cash_register_button"), command=cash_register.open, **button_style)
-    cash_register_button.grid(row=1, column=1, padx=20, pady=10)
+    cash_register_button.grid(row=0, column=3, padx=20, pady=10)
 
 
 if __name__ == "__main__":
