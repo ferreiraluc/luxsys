@@ -32,6 +32,14 @@ translations = {
         "error_fill_fields": "Please fill in all fields correctly.",
         "success_product_saved": "Product saved successfully!",
         "success_client_saved": "Client saved successfully!",
+        "total_entry": "Total Entry",
+        "total_exit": "Total Exit",
+        "net_flow": "Net Flow",
+        "total_sales": "Total Sales",
+        "transaction_saved": "Transaction saved successfully!",
+        "amount_invalid": "Invalid amount. Please enter a valid number.",
+        "transaction_type": "Transaction Type",
+        "register_transaction": "Register Transaction",
     },
     "pt": {
         "title": "Luxsys - Sistema de Importadora",
@@ -100,5 +108,31 @@ translations = {
         "error_fill_fields": "Por favor, complete todos los campos correctamente.",
         "success_product_saved": "¡Producto guardado con éxito!",
         "success_client_saved": "¡Cliente guardado con éxito!",
+    }, 
+    "register_transaction": {
+    "en": "Register Transaction",
+    "pt": "Registrar Transação",
+    "es": "Registrar Transacción"
+    },
+    "generate_report": {
+        "en": "Generate Report",
+        "pt": "Gerar Relatório",
+        "es": "Generar Informe"
+    },
+    "delete_transaction": {
+        "en": "Delete Transaction",
+        "pt": "Excluir Transação",
+        "es": "Eliminar Transacción"
+    },
+    "view_details": {
+        "en": "View Details",
+        "pt": "Ver Detalhes",
+        "es": "Ver Detalles"
+    },
+    "transaction_deleted": {
+        "en": "Transaction deleted successfully!",
+        "pt": "Transação excluída com sucesso!",
+        "es": "¡Transacción eliminada con éxito!"
     }
+
 }
