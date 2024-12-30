@@ -67,6 +67,24 @@ def create_custom_styles():
         font=("Helvetica", 10)  # Tamanho menor para o texto
     )
 
+def sort_column(treeview, col, reverse):
+    """Ordena os dados da tabela ao clicar no cabeçalho da coluna."""
+    # Recuperar todos os dados da Treeview
+    data = [(treeview.set(child, col), child) for child in treeview.get_children('')]
+
+    # Ordenar os dados, tentando converter para números, caso seja possível
+    try:
+        data.sort(key=lambda x: float(x[0]) if x[0].replace('.', '', 1).isdigit() else x[0], reverse=reverse)
+    except ValueError:
+        data.sort(key=lambda x: x[0], reverse=reverse)
+
+    # Reorganizar os itens na Treeview
+    for index, (_, item) in enumerate(data):
+        treeview.move(item, '', index)
+
+    # Alternar o próximo estado de ordenação
+    treeview.heading(col, command=lambda: sort_column(treeview, col, not reverse))
+
 
 def load_flag_images():
     """Carrega as imagens das bandeiras com verificação de erro."""
@@ -197,11 +215,11 @@ def create_product_frame(parent):
     product_table.column("Preço (USD)", anchor="center", width=100)
     product_table.column("Quantidade", anchor="center", width=80)
 
-    product_table.heading("ID", text="ID")
-    product_table.heading("Código", text="Código")
-    product_table.heading("Nome", text="Nome")
-    product_table.heading("Preço (USD)", text="Preço (USD)")
-    product_table.heading("Quantidade", text="Quantidade")
+    product_table.heading("ID", text="ID", command=lambda: sort_column(product_table, "ID", False))
+    product_table.heading("Código", text="Código", command=lambda: sort_column(product_table, "Código", False))
+    product_table.heading("Nome", text="Nome", command=lambda: sort_column(product_table, "Nome", False))
+    product_table.heading("Preço (USD)", text="Preço (USD)", command=lambda: sort_column(product_table, "Preço (USD)", False))
+    product_table.heading("Quantidade", text="Quantidade", command=lambda: sort_column(product_table, "Quantidade", False))
 
     # Botões
     button_frame = ttk.Frame(product_frame)
@@ -232,10 +250,10 @@ def create_sales_frame(parent):
     sales_table.column("Total (USD)", anchor="e", width=100)
     sales_table.column("Data", anchor="center", width=120)
 
-    sales_table.heading("ID", text="ID")
-    sales_table.heading("Cliente", text="Cliente")
-    sales_table.heading("Total (USD)", text="Total (USD)")
-    sales_table.heading("Data", text="Data")
+    sales_table.heading("ID", text="ID", command=lambda: sort_column(sales_table, "ID", False))
+    sales_table.heading("Cliente", text="Cliente", command=lambda: sort_column(sales_table, "Cliente", False))
+    sales_table.heading("Total (USD)", text="Total (USD)", command=lambda: sort_column(sales_table, "Total (USD)", False))
+    sales_table.heading("Data", text="Data", command=lambda: sort_column(sales_table, "Data", False))
 
     # Botões
     global sales_refresh_button, sales_management_button

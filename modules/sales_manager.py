@@ -73,5 +73,96 @@ def open_sales_manager():
         for row in rows:
             sales_table.insert("", "end", values=row)
 
+    def open_sale_details(sale_id):
+        """Abre uma janela com os detalhes da venda selecionada."""
+        details_window = ttk.Toplevel(sales_window)
+        details_window.title(translate("sale_details"))
+        details_window.geometry("600x400")
+
+        # Carregar dados da venda
+        sale_query = """
+            SELECT s.id, c.name, c.phone, c.city, s.total_amount, s.sale_date
+            FROM sales s
+            LEFT JOIN clients c ON s.client_id = c.id
+            WHERE s.id = ?
+        """
+        sale_data = fetch_all(sale_query, (sale_id,))
+        if not sale_data:
+            ttk.Label(details_window, text=translate("sale_not_found"), foreground="red").pack(pady=10)
+            return
+
+        sale_id, client_name, phone, city, total_amount, sale_date = sale_data[0]
+
+        # Exibir informações do cliente
+        ttk.Label(details_window, text=f"{translate('client_name')}: {client_name}", font=("Helvetica", 12)).pack(anchor="w", padx=10, pady=5)
+        ttk.Label(details_window, text=f"{translate('phone')}: {phone}", font=("Helvetica", 12)).pack(anchor="w", padx=10, pady=5)
+        ttk.Label(details_window, text=f"{translate('city')}: {city}", font=("Helvetica", 12)).pack(anchor="w", padx=10, pady=5)
+        ttk.Label(details_window, text=f"{translate('total_usd')}: ${total_amount:.2f}", font=("Helvetica", 12)).pack(anchor="w", padx=10, pady=5)
+        ttk.Label(details_window, text=f"{translate('date')}: {sale_date}", font=("Helvetica", 12)).pack(anchor="w", padx=10, pady=5)
+
+        # Produtos vendidos
+        ttk.Label(details_window, text=translate("products_sold"), font=("Helvetica", 14, "bold")).pack(anchor="w", padx=10, pady=10)
+        products_table = ttk.Treeview(details_window, columns=("Produto", "Quantidade", "Preço"), show="headings", height=8)
+        products_table.pack(fill=BOTH, expand=True, padx=10, pady=10)
+
+        products_table.column("Produto", anchor="w", width=200)
+        products_table.column("Quantidade", anchor="center", width=100)
+        products_table.column("Preço", anchor="e", width=100)
+
+        products_table.heading("Produto", text=translate("product_name"))
+        products_table.heading("Quantidade", text=translate("quantity"))
+        products_table.heading("Preço", text=translate("price"))
+
+        products_query = """
+            SELECT p.name, sp.quantity, sp.quantity * p.price
+            FROM sales_products sp
+            LEFT JOIN products p ON sp.product_id = p.id
+            WHERE sp.sale_id = ?
+        """
+        product_rows = fetch_all(products_query, (sale_id,))
+        for row in product_rows:
+            products_table.insert("", "end", values=row)
+
+        # Botões para ações
+        actions_frame = ttk.Frame(details_window, padding=10)
+        actions_frame.pack(fill=X, pady=10)
+
+        def cancel_sale():
+            """Anula a venda e atualiza o banco de dados."""
+            execute_query("DELETE FROM sales_products WHERE sale_id = ?", (sale_id,))
+            execute_query("DELETE FROM sales WHERE id = ?", (sale_id,))
+            details_window.destroy()
+            load_sales(sales_table)
+
+        ttk.Button(actions_frame, text=translate("cancel_sale"), command=cancel_sale, bootstyle="danger").pack(side=LEFT, padx=5)
+
+        def add_notes():
+            """Abre um campo para adicionar informações adicionais."""
+            notes_window = ttk.Toplevel(details_window)
+            notes_window.title(translate("add_notes"))
+            notes_window.geometry("400x200")
+
+            ttk.Label(notes_window, text=translate("additional_notes")).pack(pady=10)
+            notes_entry = ttk.Text(notes_window, height=5)
+            notes_entry.pack(fill=BOTH, expand=True, padx=10, pady=10)
+
+            def save_notes():
+                notes = notes_entry.get("1.0", END).strip()
+                execute_query("INSERT INTO sale_notes (sale_id, notes) VALUES (?, ?)", (sale_id, notes))
+                notes_window.destroy()
+
+            ttk.Button(notes_window, text=translate("save"), command=save_notes, bootstyle="success").pack(pady=10)
+
+        ttk.Button(actions_frame, text=translate("add_notes"), command=add_notes, bootstyle="info").pack(side=LEFT, padx=5)
+
+    def on_sale_select(event):
+        """Abre a janela de detalhes ao clicar em uma venda."""
+        selected_item = sales_table.selection()
+        if selected_item:
+            sale_id = sales_table.item(selected_item[0])["values"][0]
+            open_sale_details(sale_id)
+
+    sales_table.bind("<Double-1>", on_sale_select)
+
     # Carregar vendas ao iniciar
     load_sales(sales_table)
