@@ -11,7 +11,6 @@ from modules import products, clients, sales, cash_register
 from modules.product_manager import open_product_manager
 from modules.sales_manager import open_sales_manager
 
-
 def apply_zoom(app, scale_factor):
     """Aplica zoom à aplicação, ajustando fontes e espaçamentos."""
     default_font = ttk.Style().lookup("TButton", "font")
