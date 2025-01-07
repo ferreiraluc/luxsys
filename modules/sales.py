@@ -2,6 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
 from core.utils import translate
+from core.database import connect_db
 
 def open():
     """Open the sales management window."""
@@ -71,7 +72,7 @@ def open():
         if product:
             product_id, name, price, available_quantity = product[0]
             if quantity > available_quantity:
-                ttk.Label(form_frame, text=translate("error_fill_fields"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+                ttk.Label(form_frame, text=translate("error_insufficient_stock"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
                 return
 
             total = price * quantity
@@ -79,6 +80,8 @@ def open():
 
             # Adiciona à tabela
             sale_table.insert("", "end", values=(name, quantity, f"${price:.2f}", f"${total:.2f}"))
+        else:
+            ttk.Label(form_frame, text=translate("product_not_found"), foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
 
     def save_sale():
         """Save the sale to the database."""
@@ -96,19 +99,44 @@ def open():
         client_id = client[0][0]
         total_amount = sum(item[4] for item in sale_items)
 
-        # Insere venda no banco
-        execute_query("INSERT INTO sales (client_id, total_amount, sale_date) VALUES (?, ?, datetime('now'))", (client_id, total_amount))
-        sale_id = fetch_all("SELECT last_insert_rowid()")[0][0]
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            # Inicia a transação
+            cursor.execute("BEGIN TRANSACTION")
 
-        # Insere itens da venda e atualiza o estoque
-        for item in sale_items:
-            product_id, _, quantity, _, _ = item
-            execute_query("INSERT INTO sales_products (sale_id, product_id, quantity) VALUES (?, ?, ?)", (sale_id, product_id, quantity))
-            execute_query("UPDATE products SET quantity = quantity - ? WHERE id = ?", (quantity, product_id))
+            # Insere a venda
+            cursor.execute(
+                "INSERT INTO sales (client_id, total_amount, sale_date) VALUES (?, ?, datetime('now'))",
+                (client_id, total_amount)
+            )
+            sale_id = cursor.lastrowid
 
-        # Registra o valor da venda no caixa
-        execute_query("INSERT INTO cash_register (description, amount, transaction_date) VALUES (?, ?, datetime('now'))",
-                      (translate("sale_registered"), total_amount))
+            # Insere os produtos na venda
+            for item in sale_items:
+                product_id, _, quantity, _, _ = item
+                cursor.execute(
+                    "INSERT INTO sales_products (sale_id, product_id, quantity) VALUES (?, ?, ?)",
+                    (sale_id, product_id, quantity)
+                )
+                # Atualiza o estoque
+                cursor.execute(
+                    "UPDATE products SET quantity = quantity - ? WHERE id = ?",
+                    (quantity, product_id)
+                )
+
+            # Confirma a transação
+            conn.commit()
+            ttk.Label(form_frame, text=translate("success_sale_registered"), foreground="green").grid(row=2, column=0, columnspan=4, sticky="ew")
+            sale_items.clear()
+            sale_table.delete(*sale_table.get_children())
+        except Exception as e:
+            # Reverte a transação em caso de erro
+            conn.rollback()
+            ttk.Label(form_frame, text=f"{translate('error_saving_sale')}: {str(e)}", foreground="red").grid(row=2, column=0, columnspan=4, sticky="ew")
+        finally:
+            conn.close()
+
 
         ttk.Label(form_frame, text=translate("success_sale_registered"), foreground="green").grid(row=2, column=0, columnspan=4, sticky="ew")
         sale_items.clear()

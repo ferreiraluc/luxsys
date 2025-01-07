@@ -3,6 +3,7 @@ import hashlib
 
 DB_NAME = "luxsys.db"
 
+    
 def connect_db():
     """Estabelece conexão com o banco de dados SQLite."""
     return sqlite3.connect(DB_NAME)
