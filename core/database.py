@@ -1,32 +1,30 @@
 import sqlite3
+import hashlib
 
 DB_NAME = "luxsys.db"
 
+    
 def connect_db():
-    """Connect to the SQLite database and return the connection object."""
-    conn = sqlite3.connect(DB_NAME)
-    return conn
+    """Estabelece conexão com o banco de dados SQLite."""
+    return sqlite3.connect(DB_NAME)
 
 def create_tables():
-    """Create necessary tables if they don't already exist."""
+    """Cria tabelas no banco de dados, se ainda não existirem."""
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Table for Products
+    # Tabela para produtos
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
-        description TEXT,
         quantity INTEGER NOT NULL
-        
-        
     )
     """)
 
-    # Table for Clients
+    # Tabela para clientes
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS clients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +34,7 @@ def create_tables():
     )
     """)
 
-    # Table for Sales
+    # Tabela para vendas
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +45,7 @@ def create_tables():
     )
     """)
 
-    # Table for Sales Products
+    # Tabela para itens das vendas
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS sales_products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +57,7 @@ def create_tables():
     )
     """)
 
-    # Table for Cash Register
+    # Tabela para o registro do caixa
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS cash_register (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,27 +67,60 @@ def create_tables():
     )
     """)
 
+    # Tabela para usuários (login)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL
+    )
+    """)
+
+    # Adiciona usuários pré-definidos, se ainda não existirem
+    users = [
+        ("lucas", hashlib.sha256("091974".encode()).hexdigest()),
+        ("adriana", hashlib.sha256("171601".encode()).hexdigest()),
+        ("debora", hashlib.sha256("0121".encode()).hexdigest())
+    ]
+
+    cursor.executemany("""
+    INSERT OR IGNORE INTO users (username, password_hash) VALUES (?, ?)
+    """, users)
+
     conn.commit()
     conn.close()
-
 
 def execute_query(query, params=()):
-    """Execute a given query with optional parameters."""
+    """Executa uma consulta no banco de dados."""
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute(query, params)
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute(query, params)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao executar query: {e}")
+    finally:
+        conn.close()
 
 def fetch_all(query, params=()):
-    """Fetch all results for a given query with optional parameters."""
+    """Busca todos os resultados de uma consulta."""
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute(query, params)
-    results = cursor.fetchall()
-    conn.close()
-    return results
+    try:
+        cursor.execute(query, params)
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Erro ao buscar dados: {e}")
+        return []
+    finally:
+        conn.close()
 
+def authenticate_user(username, password):
+    """Autentica um usuário verificando o hash da senha."""
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    user = fetch_all("SELECT id FROM users WHERE username = ? AND password_hash = ?", (username, password_hash))
+    return len(user) > 0
 
-# Ensure tables are created when this module is imported
+# Inicializa as tabelas ao importar o módulo
 create_tables()
