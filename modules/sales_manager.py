@@ -2,6 +2,8 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import fetch_all, execute_query
 from core.utils import translate
+from reportlab.pdfgen import canvas
+import os
 
 def open_sales_manager():
     """Abre a janela de gerenciamento de vendas."""
@@ -76,7 +78,7 @@ def open_sales_manager():
         """Open a window showing the details of a selected sale."""
         details_window = ttk.Toplevel()
         details_window.title(translate("sale_details"))
-        details_window.geometry("600x400")
+        details_window.geometry("600x600")
 
         # Busca dados da venda
         sale_query = """
@@ -125,7 +127,41 @@ def open_sales_manager():
 
         for row in product_rows:
             products_table.insert("", "end", values=row)
+            
+        # Gerar PDF
+        def generate_sale_ticket(sale_id, sale_data, product_rows):
+            """Generate a PDF ticket for the given sale."""
+            output_dir = "tickets"
+            os.makedirs(output_dir, exist_ok=True)
+            file_path = os.path.join(output_dir, f"sale_ticket_{sale_id}.pdf")
 
+            c = canvas.Canvas(file_path)
+            c.setFont("Helvetica", 12)
+
+            # Sale details
+            c.drawString(50, 750, f"Sale ID: {sale_id}")
+            c.drawString(50, 730, f"Client Name: {sale_data[1]}")
+            c.drawString(50, 710, f"Phone: {sale_data[2]}")
+            c.drawString(50, 690, f"City: {sale_data[3]}")
+            c.drawString(50, 670, f"Total Amount: ${sale_data[4]:.2f}")
+            c.drawString(50, 650, f"Date: {sale_data[5]}")
+
+            # Products sold
+            c.drawString(50, 620, "Products Sold:")
+            c.drawString(50, 600, "Name")
+            c.drawString(250, 600, "Quantity")
+            c.drawString(350, 600, "Total Price")
+
+            y = 580
+            for product in product_rows:
+                c.drawString(50, y, product[0])  # Product name
+                c.drawString(250, y, str(product[1]))  # Quantity
+                c.drawString(350, y, f"${product[2]:.2f}")  # Total price
+                y -= 20
+
+            c.save()
+            return file_path
+        
         # Cancelar venda
         def cancel_sale():
             """Cancela a venda e restaura o estoque."""
@@ -145,9 +181,28 @@ def open_sales_manager():
             except Exception as e:
                 execute_query("ROLLBACK")
                 ttk.Label(details_window, text=f"{translate('error_canceling_sale')}: {str(e)}", foreground="red").pack(pady=5)
+        actions_frame = ttk.Frame(details_window, padding=10)
+        actions_frame.pack(fill=X, pady=10) 
+        cancel_button = ttk.Button(
+            actions_frame, 
+            text=translate("cancel_sale"), 
+            command=cancel_sale, 
+            bootstyle="danger"
+        )
+        cancel_button.pack(side=LEFT, padx=10)
+        
+        def download_ticket():
+            """Generate and open a sale ticket."""
+            ticket_path = generate_sale_ticket(sale_id, sale_data[0], product_rows)
+            os.startfile(ticket_path)  # Open the generated ticket (Windows only)
 
-        ttk.Button(details_window, text=translate("cancel_sale"), command=cancel_sale, bootstyle="danger").pack(anchor="w", padx=10, pady=5)
-
+        generate_ticket_button = ttk.Button(
+            actions_frame, 
+            text=translate("generate_ticket"), 
+            command=download_ticket, 
+            bootstyle="info"
+        )
+        generate_ticket_button.pack(side=LEFT, padx=10)
 
     def on_sale_select(event):
         """Abre a janela de detalhes ao clicar em uma venda."""
