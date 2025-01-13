@@ -7,7 +7,7 @@ def open():
     """Abre a janela de gerenciamento de clientes."""
     client_window = ttk.Toplevel()
     client_window.title(translate("clients_button"))
-    client_window.geometry("800x600")
+    client_window.geometry("800x700")
     client_window.rowconfigure(7, weight=1)  # Tornar a tabela responsiva
     client_window.columnconfigure(0, weight=1)
     client_window.columnconfigure(1, weight=1)

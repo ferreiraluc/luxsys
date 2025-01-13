@@ -19,7 +19,7 @@ def open():
     """Open the sales management window."""
     sales_window = ttk.Toplevel()
     sales_window.title(translate("sales_button"))
-    sales_window.geometry("800x600")
+    sales_window.geometry("800x700")
 
     # Configuração de Layout Responsivo
     sales_window.rowconfigure(0, weight=1)  # Frame superior (formulários)

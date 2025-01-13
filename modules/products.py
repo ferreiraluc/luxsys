@@ -115,7 +115,7 @@ def open():
 
             edit_window = ttk.Toplevel()
             edit_window.title(translate("edit_product"))
-            edit_window.geometry("400x300")
+            edit_window.geometry("600x600")
 
             ttk.Label(edit_window, text=translate("product_code")).pack(pady=5)
             code_entry = ttk.Entry(edit_window, width=30)
