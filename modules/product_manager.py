@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
 
-def open_product_manager():
+def open_product_manager(product_id=None):
     """Abre a aba de gerenciamento de produtos."""
     product_window = ttk.Toplevel()
     product_window.title("Gerenciamento de Produtos")
@@ -79,7 +79,7 @@ def open_product_manager():
         """Abre uma janela para editar o produto."""
         edit_window = ttk.Toplevel()
         edit_window.title("Editar Produto")
-        edit_window.geometry("300x350")
+        edit_window.geometry("500x500")
 
         product = fetch_all("SELECT id, code, name, price, quantity FROM products WHERE id = ?", (product_id,))
         if not product:

@@ -84,7 +84,8 @@ def open():
             total_entry = sum(amount for amount in amounts if amount > 0)
             total_exit = abs(sum(amount for amount in amounts if amount < 0))
             net_flow = total_entry - total_exit
-            total_sales = len(amounts)
+            # Only count "entry" transactions for total sales
+            total_sales = sum(1 for amount in amounts if amount > 0)
 
             total_entry_label.config(text=f"{total_entry:.2f}")
             total_exit_label.config(text=f"{total_exit:.2f}")
@@ -92,17 +93,32 @@ def open():
             total_sales_label.config(text=str(total_sales))
 
     def delete_transaction():
-        """Exclui uma transação selecionada."""
+        """Exclui uma transação selecionada com proteção por senha."""
         selected_item = transaction_table.selection()
         if not selected_item:
             show_toast("error", translate("select_transaction"))
             return
 
-        trans_id = transaction_table.item(selected_item)["values"][0]
-        execute_query("DELETE FROM cash_register WHERE description = ?", (trans_id,))
-        load_transactions()
-        update_dashboard()
-        show_toast("success", translate("transaction_deleted"))
+        # Create a password prompt dialog
+        def check_password():
+            if password_entry.get() == "1974":
+                trans_id = transaction_table.item(selected_item)["values"][0]
+                execute_query("DELETE FROM cash_register WHERE description = ?", (trans_id,))
+                load_transactions()
+                update_dashboard()
+                show_toast("success", translate("transaction_deleted"))
+                password_window.destroy()
+            else:
+                messagebox.showerror(translate("error"), translate("incorrect_password"))
+                password_window.destroy()
+
+        password_window = ttk.Toplevel(cash_window)
+        password_window.title(translate("password_prompt"))
+        password_window.geometry("300x150")
+        ttk.Label(password_window, text=translate("enter_password"), font=("Helvetica", 12)).pack(pady=10)
+        password_entry = ttk.Entry(password_window, show="*")
+        password_entry.pack(pady=10)
+        ttk.Button(password_window, text=translate("submit"), command=check_password, bootstyle="success").pack(pady=10)
 
     def generate_pdf_report():
         """Gera um relatório em PDF detalhado de uma transação selecionada."""

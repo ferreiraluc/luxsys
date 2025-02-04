@@ -36,6 +36,7 @@ translations = {
         "error_fill_fields": "Please fill in all fields correctly.",
         "success_product_saved": "Product saved successfully!",
         "success_client_saved": "Client saved successfully!",
+        "success_client_updated": "Client updated successfully!",
         "total_entry": "Total Entry",
         "total_exit": "Total Exit",
         "net_flow": "Net Flow",
@@ -44,6 +45,10 @@ translations = {
         "amount_invalid": "Invalid amount. Please enter a valid number.",
         "transaction_type": "Transaction Type",
         "register_transaction": "Register Transaction",
+        "view_purchase_history": "View Purchase History",
+        "purchase_history": "Purchase History",
+        "error_select_client": "Please select a client.",
+        "editing_client": "Editing Client"
     },
     "pt": {
         "title": "Luxsys - Sistema de Importadora",
@@ -82,6 +87,11 @@ translations = {
         "error_fill_fields": "Por favor, preencha todos os campos corretamente.",
         "success_product_saved": "Produto salvo com sucesso!",
         "success_client_saved": "Cliente salvo com sucesso!",
+        "success_client_updated": "Cliente atualizado com sucesso!",
+        "view_purchase_history": "Ver Histórico de Compras",
+        "purchase_history": "Histórico de Compras",
+        "error_select_client": "Selecione um cliente.",
+        "editing_client": "Editando Cliente"
     },
     "es": {
         "title": "Luxsys - Sistema de Gestión de Importaciones",
@@ -120,11 +130,16 @@ translations = {
         "error_fill_fields": "Por favor, complete todos los campos correctamente.",
         "success_product_saved": "¡Producto guardado con éxito!",
         "success_client_saved": "¡Cliente guardado con éxito!",
-    }, 
+        "success_client_updated": "¡Cliente actualizado con éxito!",
+        "view_purchase_history": "Ver Historial de Compras",
+        "purchase_history": "Historial de Compras",
+        "error_select_client": "Seleccione un cliente.",
+        "editing_client": "Editando Cliente"
+    },
     "register_transaction": {
-    "en": "Register Transaction",
-    "pt": "Registrar Transação",
-    "es": "Registrar Transacción"
+        "en": "Register Transaction",
+        "pt": "Registrar Transação",
+        "es": "Registrar Transacción"
     },
     "generate_report": {
         "en": "Generate Report",
@@ -146,5 +161,4 @@ translations = {
         "pt": "Transação excluída com sucesso!",
         "es": "¡Transacción eliminada con éxito!"
     }
-
 }
