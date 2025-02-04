@@ -3,12 +3,16 @@ from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
 from core.utils import translate
 
+# Variável global para controlar o cliente selecionado para edição
+selected_client_id = None
+
 def open():
     """Abre a janela de gerenciamento de clientes."""
     client_window = ttk.Toplevel()
     client_window.title(translate("clients_button"))
     client_window.geometry("800x700")
-    client_window.rowconfigure(7, weight=1)  # Tornar a tabela responsiva
+    # Ajusta o rowconfigure para o frame do histórico (última linha)
+    client_window.rowconfigure(8, weight=1)
     client_window.columnconfigure(0, weight=1)
     client_window.columnconfigure(1, weight=1)
 
@@ -40,7 +44,8 @@ def open():
             confirmation_label.config(text=translate("error_fill_fields"), foreground="red")
             return
 
-        if "selected_client_id" in globals() and selected_client_id is not None:
+        global selected_client_id
+        if selected_client_id is not None:
             # Editar cliente existente
             execute_query("""
                 UPDATE clients SET name = ?, phone = ?, city = ?
@@ -136,5 +141,51 @@ def open():
 
     ttk.Button(client_window, text=translate("delete_client"), command=delete_client, bootstyle=DANGER, width=20).grid(row=6, column=1, pady=10, padx=5, sticky=EW)
 
+    # --- NOVA FUNÇÃO: Histórico de Compras do Cliente ---
+    def load_client_history(client_id):
+        """Carrega o histórico de compras do cliente e atualiza a tabela de histórico."""
+        # Limpa a tabela de histórico
+        for row in history_table.get_children():
+            history_table.delete(row)
+        query = "SELECT id, total_amount, sale_date FROM sales WHERE client_id = ? ORDER BY sale_date DESC"
+        rows = fetch_all(query, (client_id,))
+        for row in rows:
+            history_table.insert("", "end", values=row)
+
+    def ver_historico():
+        """Obtém o cliente selecionado e carrega seu histórico de compras."""
+        selected_item = client_table.selection()
+        if not selected_item:
+            confirmation_label.config(text=translate("error_select_client"), foreground="red")
+            return
+        client_data = client_table.item(selected_item, "values")
+        client_id = client_data[0]
+        load_client_history(client_id)
+
+    # Botão para ver histórico de compras
+    ttk.Button(client_window, text=translate("view_purchase_history"), command=ver_historico, bootstyle=INFO, width=40)\
+        .grid(row=7, column=0, columnspan=2, pady=10)
+
+    # Frame para exibir o histórico de compras
+    history_frame = ttk.LabelFrame(client_window, text=translate("purchase_history"), padding=10, bootstyle="info")
+    history_frame.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+    history_table = ttk.Treeview(history_frame,
+                                  columns=(translate("id"), translate("total_usd"), translate("date")),
+                                  show="headings",
+                                  height=5)
+    history_table.pack(fill="both", expand=True, padx=10, pady=10)
+
+    history_table.column(translate("id"), anchor="center", width=50)
+    history_table.column(translate("total_usd"), anchor="e", width=100)
+    history_table.column(translate("date"), anchor="center", width=150)
+
+    history_table.heading(translate("id"), text=translate("id"))
+    history_table.heading(translate("total_usd"), text=translate("total_usd"))
+    history_table.heading(translate("date"), text=translate("date"))
+    # --- Fim da seção do histórico ---
+
     # Carregar clientes ao abrir a janela
     load_clients()
+
+if __name__ == "__main__":
+    open()

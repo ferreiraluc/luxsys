@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
 
-def open_product_manager():
+def open_product_manager(product_id=None):
     """Abre a aba de gerenciamento de produtos."""
     product_window = ttk.Toplevel()
     product_window.title("Gerenciamento de Produtos")

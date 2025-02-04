@@ -220,6 +220,18 @@ def create_product_frame(parent):
     product_table.heading("Preço (USD)", text="Preço (USD)", command=lambda: sort_column(product_table, "Preço (USD)", False))
     product_table.heading("Quantidade", text="Quantidade", command=lambda: sort_column(product_table, "Quantidade", False))
 
+    def on_product_double_click(event):
+        selected_item = product_table.focus()
+        if selected_item:
+            product_values = product_table.item(selected_item, "values")
+            if product_values:
+                product_id = product_values[0]
+                open_product_manager(product_id=product_id)
+    
+    product_table.bind("<Double-1>", on_product_double_click)
+    
+    
+    
     # Botões
     button_frame = ttk.Frame(product_frame)
     button_frame.pack(fill=X, pady=5)
