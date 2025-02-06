@@ -1,6 +1,8 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from core.database import execute_query, fetch_all
+# Certifique-se de que as funções translate e sort_column estejam definidas ou importadas corretamente
+from core.utils import translate
 
 def open_product_manager(product_id=None):
     """Abre a aba de gerenciamento de produtos."""
@@ -26,6 +28,7 @@ def open_product_manager(product_id=None):
     product_table.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
     for col in columns:
+        # A função sort_column deve estar definida (veja abaixo)
         product_table.heading(col, text=col, command=lambda c=col: sort_column(product_table, c, False))
         product_table.column(col, anchor="center", width=120)
 
@@ -33,7 +36,6 @@ def open_product_manager(product_id=None):
         """Carrega todos os produtos no Treeview."""
         for row in product_table.get_children():
             product_table.delete(row)
-
         rows = fetch_all("SELECT id, code, name, price, quantity FROM products ORDER BY id DESC")
         for row in rows:
             product_table.insert("", "end", values=row + ("Editar", "Excluir"))
@@ -41,7 +43,8 @@ def open_product_manager(product_id=None):
     def sort_column(treeview, col, reverse):
         """Ordena a tabela ao clicar no cabeçalho."""
         data = [(treeview.set(child, col), child) for child in treeview.get_children()]
-        data.sort(reverse=reverse, key=lambda x: (float(x[0]) if col in ("ID", "Preço (USD)", "Quantidade") else x[0]))
+        # Para colunas numéricas, tenta converter o valor para float
+        data.sort(reverse=reverse, key=lambda x: float(x[0]) if col in ("ID", "Preço (USD)", "Quantidade") and x[0] != "" else x[0])
         for index, (_, child) in enumerate(data):
             treeview.move(child, '', index)
         treeview.heading(col, command=lambda: sort_column(treeview, col, not reverse))
@@ -76,7 +79,7 @@ def open_product_manager(product_id=None):
         ttk.Button(confirm_window, text="Não", bootstyle=SUCCESS, command=confirm_window.destroy).pack(pady=10)
 
     def edit_product(product_id):
-        """Abre uma janela para editar o produto."""
+        """Abre uma janela para editar o produto e ver seu histórico de compras."""
         edit_window = ttk.Toplevel()
         edit_window.title("Editar Produto")
         edit_window.geometry("500x500")
@@ -85,7 +88,6 @@ def open_product_manager(product_id=None):
         if not product:
             ttk.Label(edit_window, text="Produto não encontrado.", foreground="red").pack(pady=10)
             return
-
         product = product[0]
 
         # Campos de edição
@@ -115,7 +117,6 @@ def open_product_manager(product_id=None):
             name = name_entry.get().strip()
             price = float(price_entry.get().strip())
             quantity = int(quantity_entry.get().strip())
-
             execute_query(
                 "UPDATE products SET code = ?, name = ?, price = ?, quantity = ? WHERE id = ?",
                 (code, name, price, quantity, product_id)
@@ -124,6 +125,35 @@ def open_product_manager(product_id=None):
             load_products()
 
         ttk.Button(edit_window, text="Salvar Alterações", bootstyle=SUCCESS, command=save_changes).pack(pady=10)
+
+        # Botão para ver histórico de compras do produto
+        ttk.Button(edit_window, text="Ver Histórico de Compras", bootstyle=INFO,
+                   command=lambda: view_product_history(product_id)).pack(pady=10)
+
+    def view_product_history(product_id):
+        """Abre uma janela exibindo o histórico de compras do produto."""
+        history_window = ttk.Toplevel()
+        history_window.title("Histórico de Compras")
+        history_window.geometry("600x400")
+        columns = ("Venda ID", "Cliente", "Quantidade", "Data", "Total (USD)")
+        history_table = ttk.Treeview(history_window, columns=columns, show="headings", height=10)
+        history_table.pack(fill="both", expand=True, padx=10, pady=10)
+        for col in columns:
+            history_table.heading(col, text=col)
+            history_table.column(col, anchor="center", width=100)
+        # Consulta que une as tabelas de vendas, itens de venda, clientes e produtos
+        query = """
+            SELECT s.id, c.name, sp.quantity, s.sale_date, (sp.quantity * p.price) as total
+            FROM sales_products sp
+            JOIN sales s ON sp.sale_id = s.id
+            JOIN clients c ON s.client_id = c.id
+            JOIN products p ON sp.product_id = p.id
+            WHERE p.id = ?
+            ORDER BY s.sale_date DESC
+        """
+        rows = fetch_all(query, (product_id,))
+        for row in rows:
+            history_table.insert("", "end", values=row)
 
     def on_action(event):
         """Determina a ação (editar ou excluir) ao clicar em uma célula da tabela."""
@@ -172,3 +202,7 @@ def open_product_manager(product_id=None):
 
     # Carregar produtos ao iniciar
     load_products()
+
+# Para testes, se executado diretamente:
+if __name__ == "__main__":
+    open_product_manager()
